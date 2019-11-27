@@ -9,23 +9,23 @@
 
 static int md5_init(EVP_MD_CTX *ctx)
 {
-  MD5Init(ctx->md_data);
+  MD5Init(EVP_MD_CTX_md_data(ctx));
   return 1;
 }
 
 static int md5_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-  MD5Update(ctx->md_data, data, count);
+  MD5Update(EVP_MD_CTX_md_data(ctx), data, count);
   return 1;
 }
 
 static int md5_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-  MD5Final(md, ctx->md_data);
+  MD5Final(md, EVP_MD_CTX_md_data(ctx));
   return 1;
 }
 
-static EVP_MD digest_md5;
+static EVP_MD *digest_md5 = NULL;
 
 /* This is a little more advanced than what I show in the OpenSSL
    blog.  It takes a copy of the builtin OpenSSL MD5WithRSAEncryption
@@ -34,12 +34,22 @@ static EVP_MD digest_md5;
 */
 static void init(void)
 {
-  memcpy(&digest_md5, EVP_md5(), sizeof(EVP_MD));
-  digest_md5.init = md5_init;
-  digest_md5.update = md5_update;
-  digest_md5.final = md5_final;
-  digest_md5.block_size = 64;   /* Internal blocksize, see rfc1321/md5.h */
-  digest_md5.ctx_size = sizeof(MD5_CTX);
+  EVP_MD *md = EVP_MD_meth_dup(EVP_md5());
+  if (md == NULL
+      || !EVP_MD_meth_set_result_size(md,16)
+      || !EVP_MD_meth_set_input_blocksize(md, 64) /* internal blocksize */
+      || !EVP_MD_meth_set_app_datasize(md, sizeof(MD5_CTX))
+      || !EVP_MD_meth_set_init(md, md5_init)
+      || !EVP_MD_meth_set_update(md, md5_update)
+      || !EVP_MD_meth_set_final(md, md5_final)
+      || !EVP_MD_meth_set_copy(md, NULL /*md5_digest_copy*/)
+      || !EVP_MD_meth_set_cleanup(md, NULL /*md5_digest_cleanup*/)
+      ) {
+    EVP_MD_meth_free(md);
+    md=NULL;
+  }
+
+  digest_md5 = md;
 };
 
 static int digest_nids[] = { NID_md5, 0 };
@@ -56,7 +66,7 @@ static int digests(ENGINE *e, const EVP_MD **digest,
   /* We are being asked for a specific digest */
   switch (nid) {
   case NID_md5:
-    *digest = &digest_md5;
+    *digest = digest_md5;
     break;
   default:
     ok = 0;
