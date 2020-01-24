@@ -3,13 +3,14 @@ AC_INIT([md5-engine], [1.0])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-dnl m4_include([m4/ax_check_openssl.m4])
+m4_include([ax_check_openssl.m4])
 
 AM_INIT_AUTOMAKE
 LT_INIT([disable-static pic-only])
 
 AC_PROG_CC
 AC_LANG(C)
+#AC_DEFINE([PROTOTYPES], [1]) will be set in Makefile.am instead
 
 AC_CHECK_HEADERS([openssl/engine.h openssl/evp.h])
 

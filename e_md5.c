@@ -15,7 +15,7 @@ static int md5_init(EVP_MD_CTX *ctx)
 
 static int md5_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-  MD5Update(EVP_MD_CTX_md_data(ctx), data, count);
+  MD5Update(EVP_MD_CTX_md_data(ctx), (unsigned char *)data, count);
   return 1;
 }
 

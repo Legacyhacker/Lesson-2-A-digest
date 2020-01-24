@@ -2,6 +2,8 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = README.md rfc1321/global.h rfc1321/md5.h
 
+AM_CFLAGS = -DPROTOTYPES=1
+
 pkglib_LTLIBRARIES = libemd5.la
 
 libemd5_la_SOURCES = e_md5.c rfc1321/md5c.c
